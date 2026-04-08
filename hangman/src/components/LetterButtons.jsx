@@ -1,4 +1,4 @@
-export function LetterButtons({ guessedLetters, currentWord, gameOver, onGuess }) {
+export function LetterButtons({ guessedLetters, currentWord, gameOver, disabled, onGuess }) {
   const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
 
   return (
@@ -14,7 +14,7 @@ export function LetterButtons({ guessedLetters, currentWord, gameOver, onGuess }
               : ''
           }`}
           onClick={() => onGuess(letter)}
-          disabled={guessedLetters.includes(letter) || gameOver}
+          disabled={guessedLetters.includes(letter) || gameOver || disabled}
         >
           {letter}
         </button>

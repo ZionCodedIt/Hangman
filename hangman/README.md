@@ -1,198 +1,225 @@
-# 🎯 Hangman Game
+# Hangman With Player Tracking
 
-A modern, interactive hangman game built with React and Vite, featuring a programming-themed word list and progressive hangman drawings.
+This project extends the original Hangman game with a small API and DynamoDB-backed player tracking. Players can log in with their name, load an existing record, create a new record when needed, and automatically persist wins and losses when a game ends.
 
+## Features
 
-## ✨ Features
+- React frontend with keyboard and button-based Hangman gameplay
+- Express API for player lookup, creation, and stat updates
+- DynamoDB integration through `DynamoDBDocumentClient`
+- Player login flow that checks Dynamo first and creates a record only when needed
+- Local React state updates for wins, losses, and winning percentage before the API `PUT`
+- UI and API tests with Vitest, Testing Library, and Supertest
+- Docker Compose setup for the frontend, API, and DynamoDB Local
 
-- **🎮 Interactive Gameplay**: Click letter buttons or use keyboard input
-- **📱 Responsive Design**: Works on desktop and mobile devices
-- **🎨 Modern UI**: Glassmorphism design with smooth animations
-- **🏆 Scoring System**: Earn points for each completed word
-- **🎭 Progressive Drawings**: 7-stage hangman progression with custom images
-- **🔄 New Game**: Start fresh anytime with a new random word
-- **🐳 Docker Support**: Easy deployment with containerization
+## Player Flow
 
-## 🚀 Quick Start
+1. Enter a player name on the home screen.
+2. The UI sends a `GET` request to `/api/players/:playerName`.
+3. If the player exists, the record is loaded and the login button is removed.
+4. If the player does not exist, the UI sends a `POST` request to create the player and then logs them in.
+5. When the game ends, the frontend updates the player stats in local state first.
+6. The UI then sends a `PUT` request to `/api/players/:playerName/stats` to persist the latest wins and losses.
+
+## Tech Stack
+
+- React 19
+- Vite 7
+- Express 5
+- AWS SDK v3
+- DynamoDB Local
+- Vitest
+- Testing Library
+- Supertest
+- Docker Compose
+
+## Project Structure
+
+```text
+hangman/
+├── server/
+│   ├── app.js
+│   ├── index.js
+│   ├── config.js
+│   ├── app.test.js
+│   ├── db/
+│   │   ├── client.js
+│   │   └── playersRepository.js
+│   └── lib/
+│       └── playerSerializer.js
+├── src/
+│   ├── api/
+│   │   └── playerApi.js
+│   ├── components/
+│   │   ├── GameMessage.jsx
+│   │   ├── GameStats.jsx
+│   │   ├── HangmanDisplay.jsx
+│   │   ├── HangmanGame.jsx
+│   │   ├── HangmanGame.test.jsx
+│   │   ├── LetterButtons.jsx
+│   │   └── WordDisplay.jsx
+│   ├── test/
+│   │   └── setup.js
+│   ├── App.css
+│   ├── App.jsx
+│   ├── constants.js
+│   └── main.jsx
+├── Dockerfile
+├── Dockerfile.api
+├── docker-compose.yml
+├── package.json
+└── README.md
+```
+
+## API Endpoints
+
+### `GET /api/health`
+
+Returns a simple health response for the API.
+
+### `GET /api/players/:playerName`
+
+Looks up an existing player.
+
+Example response:
+
+```json
+{
+  "playerName": "Avery",
+  "wins": 3,
+  "losses": 1,
+  "winningPercentage": 75
+}
+```
+
+### `POST /api/players`
+
+Creates a new player.
+
+Example request body:
+
+```json
+{
+  "playerName": "Avery"
+}
+```
+
+### `PUT /api/players/:playerName/stats`
+
+Persists the current wins and losses for a player.
+
+Example request body:
+
+```json
+{
+  "wins": 4,
+  "losses": 2
+}
+```
+
+## Local Development
 
 ### Prerequisites
 
 - Node.js 18+
-- npm or yarn
-- Docker (optional, for containerized deployment)
+- npm
+- Docker Desktop
 
-### Local Development
-
-1. **Clone the repository**
-   ```bash
-   git clone <your-repo-url>
-   cd hangman
-   ```
-
-2. **Install dependencies**
-   ```bash
-   npm install
-   ```
-
-3. **Start the development server**
-   ```bash
-   npm run dev
-   ```
-
-4. **Open your browser**
-   - Navigate to `http://localhost:5174/`
-   - Start playing!
-
-### Docker Deployment
-
-1. **Build the Docker image**
-   ```bash
-   docker build -t hangman-game .
-   ```
-
-2. **Run the container**
-   ```bash
-   docker run -p 3000:3000 hangman-game
-   ```
-
-3. **Access the game**
-   - Open `http://localhost:3000/` in your browser
-
-## 🎯 How to Play
-
-1. **Guess the Word**: A random programming-related word is selected
-2. **Make Guesses**: Click letter buttons or type on your keyboard
-3. **Track Progress**: Watch the hangman drawing progress with each wrong guess
-4. **Win Condition**: Guess all letters before the drawing is complete (6 wrong guesses)
-5. **Score Points**: Earn 10 points for each completed word
-6. **New Game**: Click "New Game" to start over with a fresh word
-
-### Game Rules
-
-- **Maximum Wrong Guesses**: 6 attempts before game over
-- **Word Categories**: Programming concepts, languages, and terms
-- **Input Methods**: Mouse clicks or keyboard input
-- **Scoring**: 10 points per completed word
-
-## 🏗️ Project Structure
-
-```
-hangman/
-├── public/
-│   ├── images/          # Hangman drawing stages
-│   │   ├── noose.png
-│   │   ├── upperbody.png
-│   │   ├── upperandlowerbody.png
-│   │   ├── 1arm.png
-│   │   ├── botharms.png
-│   │   ├── 1leg.png
-│   │   └── Dead.png
-│   ├── favicon.ico
-│   ├── manifest.json    # PWA configuration
-│   └── robots.txt
-├── src/
-│   ├── components/      # React components
-│   │   ├── HangmanDisplay.jsx
-│   │   ├── WordDisplay.jsx
-│   │   ├── GameStats.jsx
-│   │   ├── LetterButtons.jsx
-│   │   ├── GameMessage.jsx
-│   │   └── HangmanGame.jsx
-│   ├── constants.js     # Game configuration
-│   ├── App.jsx          # Main app component
-│   ├── App.css          # Global styles
-│   └── main.jsx         # App entry point
-├── Dockerfile           # Docker configuration
-├── package.json         # Dependencies and scripts
-├── vite.config.js       # Vite configuration
-└── README.md           # This file
-```
-
-## 🎨 Customization
-
-### Adding New Words
-
-Edit `src/constants.js` to add words to the `WORDS` array:
-
-```javascript
-export const WORDS = [
-  'JAVASCRIPT', 'PYTHON', 'COMPUTER', 'PROGRAMMING',
-  'YOUR_NEW_WORD', // Add your word here
-  // ... more words
-];
-```
-
-### Modifying Game Settings
-
-Update these constants in `src/constants.js`:
-
-```javascript
-export const MAX_WRONG_GUESSES = 6;  // Change difficulty
-export const POINTS_PER_WIN = 10;    // Adjust scoring
-```
-
-### Styling Changes
-
-Modify `src/App.css` to customize:
-- Color scheme
-- Layout dimensions
-- Animation timings
-- Responsive breakpoints
-
-## 🛠️ Development
-
-### Available Scripts
+### Install Dependencies
 
 ```bash
-npm run dev      # Start development server
-npm run build    # Build for production
-npm run preview  # Preview production build
-npm run lint     # Run ESLint
+npm install
 ```
 
-### Technologies Used
+### Run the Frontend
 
-- **React 18** - UI framework
-- **Vite** - Build tool and dev server
-- **CSS3** - Styling with modern features
-- **Docker** - Containerization
-- **ESLint** - Code linting
+```bash
+npm run dev
+```
 
-### Component Architecture
+### Run the API
 
-The app follows a modular component structure:
+```bash
+npm run dev:api
+```
 
-- **`HangmanGame`** - Main game logic and state management
-- **`HangmanDisplay`** - Shows current hangman stage
-- **`WordDisplay`** - Displays word with blanks/letters
-- **`GameStats`** - Shows score and wrong guesses
-- **`LetterButtons`** - Interactive letter selection
-- **`GameMessage`** - Win/loss notifications
+The frontend runs on `http://localhost:5173` and the API runs on `http://localhost:3001`.
 
-## 📱 Progressive Web App (PWA)
+### Start DynamoDB Local With Docker
 
-This game includes PWA features for installation on mobile devices:
+```bash
+docker compose up dynamodb
+```
 
-- **Web App Manifest**: Configured in `public/manifest.json`
-- **Service Worker**: Automatic caching for offline play
-- **Responsive Design**: Optimized for all screen sizes
+The API auto-creates the `HangmanPlayers` table when it starts.
 
-## 🤝 Contributing
+## Docker Compose
 
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
+To run the full stack:
 
-## 🙏 Acknowledgments
+```bash
+docker compose up --build
+```
 
-- Hangman drawing images
-- Programming word list inspiration
-- React and Vite communities
+Services:
 
----
+- Frontend: `http://localhost:3000`
+- API: `http://localhost:3001`
+- DynamoDB Local: `http://localhost:8000`
 
-**Enjoy playing Hangman! 🎉**
+## Testing
 
-For questions or suggestions, feel free to open an issue or submit a pull request.
+Run all tests:
+
+```bash
+npm run test
+```
+
+Run only API tests:
+
+```bash
+npm run test:api
+```
+
+Run only UI tests:
+
+```bash
+npm run test:ui
+```
+
+## Postman Checks
+
+Use Postman to verify the API before wiring it into the UI.
+
+Suggested requests:
+
+- `GET http://localhost:3001/api/health`
+- `GET http://localhost:3001/api/players/Avery`
+- `POST http://localhost:3001/api/players`
+- `PUT http://localhost:3001/api/players/Avery/stats`
+
+## Environment Notes
+
+The frontend reads `VITE_API_BASE_URL` when provided. If it is not set, it uses `http://localhost:3001/api` by default.
+
+The API reads these environment variables:
+
+- `PORT`
+- `AWS_REGION`
+- `DYNAMODB_ENDPOINT`
+- `PLAYERS_TABLE`
+
+## Submission Checklist
+
+Items completed in this repo:
+
+- Updated Hangman frontend with player login and stat tracking
+- Added DynamoDB-backed API
+- Added automated tests
+- Added Docker Compose
+- Updated README
+
+Items still manual:
+
+- Record the video demo
+- Push the final code and submit the Git link required by your class

@@ -1,0 +1,29 @@
+services:
+  dynamodb:
+    image: amazon/dynamodb-local:latest
+    command: "-jar DynamoDBLocal.jar -sharedDb -inMemory"
+    ports:
+      - "8000:8000"
+
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile.api
+    environment:
+      PORT: 3001
+      AWS_REGION: us-east-1
+      DYNAMODB_ENDPOINT: http://dynamodb:8000
+      PLAYERS_TABLE: HangmanPlayers
+    depends_on:
+      - dynamodb
+    ports:
+      - "3001:3001"
+
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    depends_on:
+      - api
+    ports:
+      - "3000:3000"
